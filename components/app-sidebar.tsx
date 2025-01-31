@@ -38,6 +38,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 icon: LucideIcons.FileText,
                 isActive: true,
                 url: "/branchapplication"
+            },
+            {
+                title: "Bayi Sözleşme Yönetimi",
+                icon: LucideIcons.ScrollText,
+                isActive: true,
+                url: "/contract"
             }
         ];
         return items;
