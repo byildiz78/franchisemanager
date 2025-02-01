@@ -30,24 +30,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {
                 title: "Dashboard",
                 icon: LucideIcons.LayoutDashboard,
-                isActive: true,
-                url: "/dashboard"
+                isActive: pathname === `/${tenantId}/dashboard`,
+                url: `/${tenantId}/dashboard`
             },
             {
                 title: "Bayi Başvuru Yönetimi",
-                icon: LucideIcons.FileText,
-                isActive: true,
-                url: "/branchapplication"
+                icon: LucideIcons.Store,
+                isActive: pathname === `/${tenantId}/branchapplication`,
+                url: `/${tenantId}/branchapplication`
             },
             {
                 title: "Bayi Sözleşme Yönetimi",
-                icon: LucideIcons.ScrollText,
-                isActive: true,
-                url: "/contract"
+                icon: LucideIcons.FileText,
+                isActive: pathname === `/${tenantId}/contract`,
+                url: `/${tenantId}/contract`
+            },
+            {
+                title: "Kiralama Yönetimi",
+                icon: LucideIcons.Building2,
+                isActive: pathname === `/${tenantId}/rental`,
+                url: `/${tenantId}/rental`
+            },
+            {
+                title: "Royalty Yönetimi",
+                icon: LucideIcons.Receipt,
+                isActive: pathname === `/${tenantId}/royalty`,
+                url: `/${tenantId}/royalty`
             }
         ];
         return items;
-    }, []);
+    }, [pathname, tenantId]);
     useEffect(() => {
         const storedUserData = localStorage.getItem(`userData_${tenantId}`);
         if (storedUserData) {
@@ -101,7 +113,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarHeader>
             <SidebarContent>
                 <nav className="flex flex-col gap-4">
-                    <NavMain items={navItems} />
+                    <NavMain />
                 </nav>
             </SidebarContent>
             <SidebarFooter>
