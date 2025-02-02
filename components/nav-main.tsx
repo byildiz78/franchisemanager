@@ -6,7 +6,7 @@ import { useTabStore } from "@/stores/tab-store"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Building2, FileText, Store, LayoutDashboard, Receipt, BarChart3, GraduationCap } from "lucide-react"
+import { Building2, FileText, Store, LayoutDashboard, Receipt, BarChart3, GraduationCap, MapPin, Eye } from "lucide-react"
 
 interface NavItem {
   title: string
@@ -30,6 +30,12 @@ export function NavMain({ items }: NavMainProps) {
       icon: LayoutDashboard,
       isActive: pathname === `/${tenantId}/dashboard`,
       url: `/${tenantId}/dashboard`,
+    },
+    {
+      title: "Kuşbakışı",
+      icon: MapPin,
+      isActive: pathname === `/${tenantId}/birdseye`,
+      url: `/${tenantId}/birdseye`,
     },
     {
       title: "Data Analiz",
@@ -72,6 +78,12 @@ export function NavMain({ items }: NavMainProps) {
       icon: GraduationCap,
       isActive: pathname === `/${tenantId}/training`,
       url: `/${tenantId}/training`,
+    },
+    {
+      title: "Analytics",
+      icon: Eye,
+      isActive: pathname === `/${tenantId}/analytics`,
+      url: `/${tenantId}/analytics`,
     }
   ]
 
@@ -104,6 +116,10 @@ export function NavMain({ items }: NavMainProps) {
             return import("@/app/[tenantId]/(main)/data-analysis/page")
           case "Kurum içi Eğitim":
             return import("@/app/[tenantId]/(main)/training/page")
+          case "Kuşbakışı":
+            return import("@/app/[tenantId]/(main)/birdseye/page")
+          case "Analytics":
+            return import("@/app/[tenantId]/(main)/analytics/page")
           default:
             return Promise.reject(new Error("Unknown component"))
         }
