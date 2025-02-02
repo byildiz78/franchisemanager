@@ -6,7 +6,7 @@ import { useTabStore } from "@/stores/tab-store"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Building2, FileText, Store, LayoutDashboard, Receipt } from "lucide-react"
+import { Building2, FileText, Store, LayoutDashboard, Receipt, BarChart3, GraduationCap } from "lucide-react"
 
 interface NavItem {
   title: string
@@ -32,10 +32,22 @@ export function NavMain({ items }: NavMainProps) {
       url: `/${tenantId}/dashboard`,
     },
     {
+      title: "Data Analiz",
+      icon: BarChart3,
+      isActive: pathname === `/${tenantId}/data-analysis`,
+      url: `/${tenantId}/data-analysis`,
+    },
+    {
       title: "Bayi Başvuru Yönetimi",
       icon: Store,
       isActive: pathname === `/${tenantId}/branchapplication`,
       url: `/${tenantId}/branchapplication`,
+    },
+    {
+      title: "Bayi Onboarding",
+      icon: Store,
+      isActive: pathname === `/${tenantId}/branchonboarding`,
+      url: `/${tenantId}/branchonboarding`,
     },
     {
       title: "Bayi Sözleşme Yönetimi",
@@ -54,6 +66,12 @@ export function NavMain({ items }: NavMainProps) {
       icon: Receipt,
       isActive: pathname === `/${tenantId}/royalty`,
       url: `/${tenantId}/royalty`,
+    },
+    {
+      title: "Kurum içi Eğitim",
+      icon: GraduationCap,
+      isActive: pathname === `/${tenantId}/training`,
+      url: `/${tenantId}/training`,
     }
   ]
 
@@ -74,12 +92,18 @@ export function NavMain({ items }: NavMainProps) {
         switch (route.title) {
           case "Bayi Başvuru Yönetimi":
             return import("@/app/[tenantId]/(main)/branchapplication/page")
+          case "Bayi Onboarding":
+            return import("@/app/[tenantId]/(main)/branchonboarding/page")
           case "Bayi Sözleşme Yönetimi":
             return import("@/app/[tenantId]/(main)/contract/page")
           case "Kiralama Yönetimi":
             return import("@/app/[tenantId]/(main)/rental/page")
           case "Royalty Yönetimi":
             return import("@/app/[tenantId]/(main)/royalty/page")
+          case "Data Analiz":
+            return import("@/app/[tenantId]/(main)/data-analysis/page")
+          case "Kurum içi Eğitim":
+            return import("@/app/[tenantId]/(main)/training/page")
           default:
             return Promise.reject(new Error("Unknown component"))
         }
