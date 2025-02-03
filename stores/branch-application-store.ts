@@ -5,6 +5,7 @@ interface BranchApplicationStore {
   applications: BranchApplication[]
   activities: Record<number, ApplicationActivity[]>
   setApplications: (applications: BranchApplication[]) => void
+  setActivities: (activities: Record<number, ApplicationActivity[]>) => void
   addApplication: (application: BranchApplication) => void
   updateApplication: (id: number, application: Partial<BranchApplication>) => void
   addActivity: (applicationId: number, activity: Omit<ApplicationActivity, "id">) => void
@@ -15,6 +16,7 @@ export const useBranchApplicationStore = create<BranchApplicationStore>((set, ge
   applications: [],
   activities: {},
   setApplications: (applications) => set({ applications }),
+  setActivities: (activities) => set({ activities }),
   addApplication: (application) => 
     set((state) => ({ 
       applications: [...state.applications, application] 
@@ -48,7 +50,7 @@ export const useBranchApplicationStore = create<BranchApplicationStore>((set, ge
     get().addActivity(applicationId, {
       applicationId,
       type: "status_change",
-      description: `Başvuru durumu değiştirildi: ${statusMap[oldStatus]} → ${statusMap[newStatus]}`,
+      description: `Başvuru durumu değiştirildi: ${oldStatus} → ${newStatus}`,
       oldStatus,
       newStatus,
       createdBy: userId,

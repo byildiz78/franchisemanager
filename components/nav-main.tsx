@@ -6,7 +6,7 @@ import { useTabStore } from "@/stores/tab-store"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Building2, FileText, Store, LayoutDashboard, Receipt, BarChart3, GraduationCap, MapPin, Eye } from "lucide-react"
+import { Building2, FileText, Store, LayoutDashboard, Receipt, BarChart3, GraduationCap, MapPin, Eye, Truck } from "lucide-react"
 
 interface NavItem {
   title: string
@@ -37,6 +37,16 @@ export function NavMain({ items }: NavMainProps) {
       isActive: pathname === `/${tenantId}/birdseye`,
       url: `/${tenantId}/birdseye`,
     },
+
+    
+    {
+      title: "Analytics",
+      icon: Eye,
+      isActive: pathname === `/${tenantId}/analytics`,
+      url: `/${tenantId}/analytics`,
+    },
+
+
     {
       title: "Data Analiz",
       icon: BarChart3,
@@ -52,8 +62,8 @@ export function NavMain({ items }: NavMainProps) {
     {
       title: "Bayi Onboarding",
       icon: Store,
-      isActive: pathname === `/${tenantId}/branchonboarding`,
-      url: `/${tenantId}/branchonboarding`,
+      isActive: pathname === `/${tenantId}/onboarding`,
+      url: `/${tenantId}/onboarding`,
     },
     {
       title: "Bayi Sözleşme Yönetimi",
@@ -74,16 +84,16 @@ export function NavMain({ items }: NavMainProps) {
       url: `/${tenantId}/royalty`,
     },
     {
+      title: "Tedarikçi Sözleşme Yönetimi",
+      icon: Truck,
+      isActive: pathname === `/${tenantId}/supplier-contract`,
+      url: `/${tenantId}/supplier-contract`,
+    },
+    {
       title: "Kurum içi Eğitim",
       icon: GraduationCap,
       isActive: pathname === `/${tenantId}/training`,
       url: `/${tenantId}/training`,
-    },
-    {
-      title: "Analytics",
-      icon: Eye,
-      isActive: pathname === `/${tenantId}/analytics`,
-      url: `/${tenantId}/analytics`,
     }
   ]
 
@@ -112,6 +122,8 @@ export function NavMain({ items }: NavMainProps) {
             return import("@/app/[tenantId]/(main)/rental/page")
           case "Royalty Yönetimi":
             return import("@/app/[tenantId]/(main)/royalty/page")
+          case "Tedarikçi Sözleşme Yönetimi":
+            return import("@/app/[tenantId]/(main)/supplier-contract/page")
           case "Data Analiz":
             return import("@/app/[tenantId]/(main)/data-analysis/page")
           case "Kurum içi Eğitim":

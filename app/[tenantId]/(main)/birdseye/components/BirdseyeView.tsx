@@ -208,7 +208,12 @@ export default function BirdseyeView() {
             latLngBounds: TR_BOUNDS,
             strictBounds: false,
         },
-        mapTypeControl: false,
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+            style: 2, // DROPDOWN_MENU
+            position: 3, // RIGHT_TOP
+            mapTypeIds: ["roadmap", "satellite", "hybrid", "terrain"]
+        },
         streetViewControl: false,
         fullscreenControl: false,
         zoomControl: true,
@@ -233,44 +238,50 @@ export default function BirdseyeView() {
     }
 
     return (
-        <div className="space-y-4 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen">
-            <div className="grid grid-cols-3 gap-4">
-                <div className="flex items-center gap-2 px-4 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg shadow-sm">
-                    <Store className="w-5 h-5 text-blue-500" />
+        <div className="space-y-6 p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen">
+            <div className="grid grid-cols-3 gap-6">
+                <div className="group flex items-center gap-4 px-6 py-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                        <Store className="w-6 h-6 text-blue-500" />
+                    </div>
                     <div>
-                        <div className="text-sm font-medium">{stats.stores}</div>
-                        <div className="text-xs text-muted-foreground">Bayi</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.stores}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Aktif Bayi</div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg shadow-sm">
-                    <Users className="w-5 h-5 text-purple-500" />
+                <div className="group flex items-center gap-4 px-6 py-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+                    <div className="p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                        <Users className="w-6 h-6 text-purple-500" />
+                    </div>
                     <div>
-                        <div className="text-sm font-medium">{stats.candidates}</div>
-                        <div className="text-xs text-muted-foreground">Aday</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.candidates}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Bayi Adayı</div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg shadow-sm">
-                    <Target className="w-5 h-5 text-green-500" />
+                <div className="group flex items-center gap-4 px-6 py-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+                    <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                        <Target className="w-6 h-6 text-green-500" />
+                    </div>
                     <div>
-                        <div className="text-sm font-medium">{stats.regions}</div>
-                        <div className="text-xs text-muted-foreground">Bölge</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.regions}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Aktif Bölge</div>
                     </div>
                 </div>
             </div>
 
-            <Card className="p-1 border-0 shadow-xl overflow-hidden rounded-xl">
-                <div className="p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 flex items-center gap-4 flex-wrap">
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-500/20" />
-                        <span className="text-xs text-muted-foreground">Kapsam Alanı (20km)</span>
+            <Card className="overflow-hidden rounded-xl border-0 shadow-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-md">
+                <div className="p-4 bg-gradient-to-r from-gray-50/90 to-white/90 dark:from-gray-800/90 dark:to-gray-900/90 border-b border-gray-200 dark:border-gray-700 flex items-center gap-6 flex-wrap">
+                    <div className="flex items-center gap-3 px-4 py-2 bg-white/80 dark:bg-gray-800/80 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="w-3 h-3 rounded-full bg-blue-500/20 ring-4 ring-blue-500/10" />
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Kapsam Alanı (20km)</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <img src={FLAG_ICONS.store} alt="Bayi" className="w-3 h-3" />
-                        <span className="text-xs text-muted-foreground">Mevcut Bayiler</span>
+                    <div className="flex items-center gap-3 px-4 py-2 bg-white/80 dark:bg-gray-800/80 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                        <img src={FLAG_ICONS.store} alt="Bayi" className="w-4 h-4" />
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Mevcut Bayiler</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <img src={FLAG_ICONS.candidate} alt="Aday" className="w-3 h-3" />
-                        <span className="text-xs text-muted-foreground">Aday Başvuruları</span>
+                    <div className="flex items-center gap-3 px-4 py-2 bg-white/80 dark:bg-gray-800/80 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                        <img src={FLAG_ICONS.candidate} alt="Aday" className="w-4 h-4" />
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Aday Başvuruları</span>
                     </div>
                 </div>
 
@@ -288,10 +299,10 @@ export default function BirdseyeView() {
                                     radius={20000}
                                     options={{
                                         fillColor: "#3b82f6",
-                                        fillOpacity: 0.08,
+                                        fillOpacity: 0.12,
                                         strokeColor: "#3b82f6",
-                                        strokeOpacity: 0.16,
-                                        strokeWeight: 1,
+                                        strokeOpacity: 0.24,
+                                        strokeWeight: 2,
                                     }}
                                 />
                             )}
@@ -315,25 +326,25 @@ export default function BirdseyeView() {
                                 pixelOffset: { width: 0, height: -32 }
                             }}
                         >
-                            <div className="p-3 min-w-[200px]">
-                                <div className={`text-sm font-semibold mb-2 ${
-                                    selectedLocation.type === "store" ? "text-blue-600" : "text-purple-600"
+                            <div className="p-4 min-w-[240px]">
+                                <div className={`text-base font-bold mb-3 ${
+                                    selectedLocation.type === "store" ? "text-blue-600 dark:text-blue-400" : "text-purple-600 dark:text-purple-400"
                                 }`}>
                                     {selectedLocation.name}
                                 </div>
-                                <div className="space-y-2 text-xs text-gray-600">
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="w-3 h-3" />
-                                        {selectedLocation.region}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                        <MapPin className="w-4 h-4" />
+                                        <span className="font-medium">{selectedLocation.region}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <div className={`w-2.5 h-2.5 rounded-full ${
                                             selectedLocation.status === "Aktif" ? "bg-green-500" :
                                             selectedLocation.status === "Yeni Açıldı" ? "bg-blue-500" :
                                             selectedLocation.status === "Hazırlık Aşamasında" ? "bg-yellow-500" :
                                             "bg-purple-500"
                                         }`} />
-                                        {selectedLocation.status}
+                                        <span className="font-medium text-gray-600 dark:text-gray-300">{selectedLocation.status}</span>
                                     </div>
                                 </div>
                             </div>

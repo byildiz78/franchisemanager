@@ -1,0 +1,223 @@
+# PostgreSQL Veritabanı Geçiş Planı
+
+## 1. Ön Hazırlık ve Altyapı (1. Hafta)
+
+### 1.1 PostgreSQL Kurulumu ve Yapılandırma
+- PostgreSQL 15 veya üzeri sürüm kurulumu
+- Veritabanı ve şema oluşturma
+- Kullanıcı yetkilendirmeleri
+- Bağlantı güvenliği yapılandırması
+
+### 1.2 Prisma ORM Entegrasyonu
+```bash
+npm install @prisma/client prisma
+npx prisma init
+```
+
+### 1.3 Çevresel Değişkenler
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/franchisemanager?schema=public"
+```
+
+## 2. Veritabanı Şema Tasarımı (2. Hafta)
+
+### 2.1 Bayi Başvuru Modülü
+```prisma
+model FranchiseApplication {
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  status      String      // PENDING, APPROVED, REJECTED
+  companyName String
+  taxNumber   String      @unique
+  address     String
+  city        String
+  district    String
+  contactInfo ContactInfo?
+  documents   Document[]
+  notes       Note[]
+}
+
+model ContactInfo {
+  id          String    @id @default(uuid())
+  name        String
+  phone       String
+  email       String
+  position    String
+  application FranchiseApplication @relation(fields: [applicationId], references: [id])
+  applicationId String  @unique
+}
+```
+
+### 2.2 Denetim Modülü
+```prisma
+model Audit {
+  id          String    @id @default(uuid())
+  date        DateTime
+  branchId    String
+  formType    String
+  inspector   String
+  description String
+  notes       String?
+  branch      Branch    @relation(fields: [branchId], references: [id])
+  results     AuditResult[]
+}
+
+model Branch {
+  id          String    @id @default(uuid())
+  name        String
+  city        String
+  audits      Audit[]
+}
+```
+
+### 2.3 Kullanıcı ve Yetkilendirme
+```prisma
+model User {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  name        String
+  role        Role      @default(USER)
+  permissions Permission[]
+}
+
+enum Role {
+  ADMIN
+  INSPECTOR
+  BRANCH_MANAGER
+  USER
+}
+```
+
+## 3. Veri Migrasyon Süreci (3-4. Hafta)
+
+### 3.1 Mock Verilerden Gerçek Veriye Geçiş Sırası
+1. Kullanıcılar ve Roller
+2. Şubeler
+3. Bayi Başvuruları
+4. Denetimler
+5. Dokümanlar
+6. Bildirimler
+
+### 3.2 Her Modül İçin Migrasyon Adımları
+1. Şema oluşturma
+```bash
+npx prisma migrate dev --name init_module_name
+```
+
+2. Mock verileri dönüştürme scripti
+```typescript
+import { PrismaClient } from '@prisma/client'
+import { mockData } from './mockData'
+
+const prisma = new PrismaClient()
+
+async function migrate() {
+  for (const item of mockData) {
+    await prisma.modelName.create({
+      data: {
+        // veri dönüşüm mantığı
+      }
+    })
+  }
+}
+```
+
+3. Veri doğrulama
+```typescript
+async function validate() {
+  const count = await prisma.modelName.count()
+  console.log(`Migrated ${count} records`)
+}
+```
+
+## 4. API Katmanı Güncellemesi (5. Hafta)
+
+### 4.1 API Route Güncellemeleri
+- Mock veri servislerinden Prisma servislerine geçiş
+- Her endpoint için hata yönetimi
+- Validasyon katmanı güncelleme
+
+### 4.2 Örnek API Endpoint Yapısı
+```typescript
+// pages/api/franchise-applications.ts
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+export default async function handler(req, res) {
+  try {
+    switch (req.method) {
+      case 'GET':
+        const applications = await prisma.franchiseApplication.findMany({
+          include: {
+            contactInfo: true,
+            documents: true
+          }
+        })
+        return res.json(applications)
+      // diğer HTTP metodları...
+    }
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+```
+
+## 5. Test ve Doğrulama (6. Hafta)
+
+### 5.1 Test Senaryoları
+- Birim testleri
+- Entegrasyon testleri
+- End-to-end testleri
+
+### 5.2 Performans Testleri
+- Yük testleri
+- Stres testleri
+- Sorgu optimizasyonu
+
+## 6. Canlıya Geçiş Planı (7. Hafta)
+
+### 6.1 Geçiş Stratejisi
+1. Yedekleme
+2. Maintenance mode aktivasyonu
+3. Şema migrasyon
+4. Veri migrasyon
+5. API switch
+6. Doğrulama
+7. Maintenance mode deaktivasyonu
+
+### 6.2 Rollback Planı
+- Yedekten geri dönüş prosedürü
+- Mock veriye dönüş yolu
+- Hızlı switch mekanizması
+
+## 7. İzleme ve Bakım (Sürekli)
+
+### 7.1 Veritabanı İzleme
+- Bağlantı sayısı
+- Sorgu performansı
+- Disk kullanımı
+- Deadlock durumları
+
+### 7.2 Bakım Görevleri
+- Düzenli yedekleme
+- Index optimizasyonu
+- Vacuum işlemleri
+- İstatistik güncelleme
+
+## Gerekli Paketler
+```json
+{
+  "dependencies": {
+    "@prisma/client": "^5.x",
+    "pg": "^8.x",
+    "zod": "^3.x"  // validasyon için
+  },
+  "devDependencies": {
+    "prisma": "^5.x",
+    "@types/pg": "^8.x",
+    "jest": "^29.x"
+  }
+}
+```

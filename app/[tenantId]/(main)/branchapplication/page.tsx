@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useFilterStore } from "@/stores/filters-store"
 import { useTabStore } from '@/stores/tab-store'
 import { useBranchApplicationStore } from "@/stores/branch-application-store"
@@ -15,35 +15,25 @@ import { Badge } from "@/components/ui/badge"
 import { cn, formatDateTime } from "@/lib/utils"
 import { Tooltip, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import CreateApplication from "./components/BranchCreateApplication"
+import { mockApplications, mockActivities } from "./mock-data"
+import { statusMap, priorityOptions, statusOptions } from "./branch-application-types"
 
 export default function ApplicationsPage() {
     const { selectedFilter } = useFilterStore()
     const { activeTab } = useTabStore()
-    const { applications: storeApplications } = useBranchApplicationStore();
+    const { applications, setApplications, setActivities } = useBranchApplicationStore();
     const [showCreateForm, setShowCreateForm] = useState(false)
-    const [applications, setApplications] = useState([])
-    const [apiApplications, setApiApplications] = useState([])
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState("all")
     const [priorityFilter, setPriorityFilter] = useState("all")
-    const [error, setError] = useState(null)
-    const [isLoading, setIsLoading] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 10
 
-    const statusOptions = [
-        { value: "all", label: "Tüm Durumlar" },
-        { value: "pending", label: "Beklemede" },
-        { value: "approved", label: "Onaylandı" },
-        { value: "rejected", label: "Reddedildi" }
-    ]
-
-    const priorityOptions = [
-        { value: "all", label: "Tüm Öncelikler" },
-        { value: "high", label: "Yüksek" },
-        { value: "medium", label: "Orta" },
-        { value: "low", label: "Düşük" }
-    ]
+    // Mock verileri yükle
+    useEffect(() => {
+        setApplications(mockApplications)
+        setActivities(mockActivities)
+    }, [setApplications, setActivities])
 
     const filteredApplications = applications.filter(application => {
         const matchesSearch =
@@ -72,7 +62,39 @@ export default function ApplicationsPage() {
     }
 
     if (showCreateForm) {
-        return <CreateApplication filteredBranches={selectedFilter.branches} />
+        return <CreateApplication filteredBranches={selectedFilter.branches} onBack={() => setShowCreateForm(false)} />
+    }
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500'
+            case 'in_review':
+                return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-500'
+            case 'approved':
+                return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500'
+            case 'contract_shared':
+                return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-500'
+            case 'contract_signed':
+                return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-500'
+            case 'rejected':
+                return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500'
+            default:
+                return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-500'
+        }
+    }
+
+    const getPriorityColor = (priority: string) => {
+        switch (priority) {
+            case 'high':
+                return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500'
+            case 'medium':
+                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500'
+            case 'low':
+                return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500'
+            default:
+                return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-500'
+        }
     }
 
     return (
@@ -99,25 +121,22 @@ export default function ApplicationsPage() {
             <div className="flex flex-col md:flex-row gap-4">
                 <Card className="w-full bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 border-2 border-blue-100/50 dark:border-blue-900/20 shadow-lg shadow-blue-500/5">
                     <div className="p-6">
-                        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                        <div className="flex flex-col md:flex-row gap-4">
                             <div className="flex-1">
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400" />
+                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Başvuru ara..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-10 bg-white/80 dark:bg-gray-800/80 border-2 border-blue-100 dark:border-blue-900/30 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl transition-all duration-200"
+                                        className="pl-8"
                                     />
                                 </div>
                             </div>
-                            <div className="flex gap-2 w-full md:w-auto">
+                            <div className="w-full md:w-[180px]">
                                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                    <SelectTrigger className="w-full md:w-[180px] bg-white/80 dark:bg-gray-800/80 border-2 border-blue-100 dark:border-blue-900/30 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl">
-                                        <div className="flex items-center gap-2">
-                                            <Filter className="w-4 h-4" />
-                                            <SelectValue placeholder="Durum Filtrele" />
-                                        </div>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Durum seçin" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {statusOptions.map((option) => (
@@ -127,13 +146,11 @@ export default function ApplicationsPage() {
                                         ))}
                                     </SelectContent>
                                 </Select>
-
+                            </div>
+                            <div className="w-full md:w-[180px]">
                                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                                    <SelectTrigger className="w-full md:w-[180px] bg-white/80 dark:bg-gray-800/80 border-2 border-blue-100 dark:border-blue-900/30 focus:border-blue-500 dark:focus:border-blue-400 rounded-xl">
-                                        <div className="flex items-center gap-2">
-                                            <AlertCircle className="w-4 h-4" />
-                                            <SelectValue placeholder="Öncelik Filtrele" />
-                                        </div>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Öncelik seçin" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {priorityOptions.map((option) => (
@@ -149,195 +166,90 @@ export default function ApplicationsPage() {
                 </Card>
             </div>
 
-            <Card className="border-0 shadow-xl bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm flex-1 overflow-hidden rounded-xl">
-                <div className="rounded-xl border border-gray-100 dark:border-gray-800 h-full flex flex-col">
-                    <div className="flex-1 overflow-auto
-                        [&::-webkit-scrollbar]:w-2
-                        [&::-webkit-scrollbar-thumb]:bg-gray-300/50
-                        [&::-webkit-scrollbar-thumb]:rounded-full
-                        [&::-webkit-scrollbar-track]:bg-transparent
-                        dark:[&::-webkit-scrollbar-thumb]:bg-gray-700/50
-                        hover:[&::-webkit-scrollbar-thumb]:bg-gray-300/80
-                        dark:hover:[&::-webkit-scrollbar-thumb]:bg-gray-700/80">
-                        <Table className="relative w-full">
-                            <TableHeader className="sticky top-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-10">
-                                <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
-                                    <TableHead className="w-[5%]">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
-                                                <FileText className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                                            </span>
-                                            ID
-                                        </div>
-                                    </TableHead>
-                                    <TableHead className="w-[20%]">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                                                <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                            </span>
-                                            Başvuru Başlığı
-                                        </div>
-                                    </TableHead>
-                                    <TableHead className="w-[15%]">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                                                <Store className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                            </span>
-                                            Şube
-                                        </div>
-                                    </TableHead>
-                                    <TableHead className="w-[10%] text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <span className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
-                                                <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                                            </span>
-                                            Durum
-                                        </div>
-                                    </TableHead>
-                                    <TableHead className="w-[10%] text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <span className="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-900/50 flex items-center justify-center">
-                                                <Star className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-                                            </span>
-                                            Öncelik
-                                        </div>
-                                    </TableHead>
-                                    <TableHead className="w-[15%] text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <span className="w-8 h-8 rounded-lg bg-pink-100 dark:bg-pink-900/50 flex items-center justify-center">
-                                                <Calendar className="h-4 w-4 text-pink-600 dark:text-pink-400" />
-                                            </span>
-                                            Tarih
-                                        </div>
-                                    </TableHead>
-                                    <TableHead className="w-[10%] text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <span className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center">
-                                                <Eye className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                                            </span>
-                                            İşlemler
-                                        </div>
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLoading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={8} className="h-24">
-                                            <div className="flex items-center justify-center">
-                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : paginatedApplications.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={8} className="text-center py-4">
-                                            Henüz başvuru bulunmamaktadır.
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    paginatedApplications.map((application, index) => (
-                                        <TableRow
-                                            key={application.id}
-                                            className="group hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
-                                        >
-                                            <TableCell>
-                                                <div className="font-medium text-start">#{application.id}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="font-medium">{application.Title}</div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="font-medium">{application.BranchName}</div>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge
-                                                    variant="outline"
-                                                    className={cn(
-                                                        "inline-flex items-center justify-center w-24",
-                                                        application.Status === "pending" && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400",
-                                                        application.Status === "approved" && "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400",
-                                                        application.Status === "rejected" && "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-                                                    )}
-                                                >
-                                                    {application.Status === "pending" && "Beklemede"}
-                                                    {application.Status === "approved" && "Onaylandı"}
-                                                    {application.Status === "rejected" && "Reddedildi"}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge
-                                                    variant="outline"
-                                                    className={cn(
-                                                        "inline-flex items-center justify-center w-20",
-                                                        application.Priority === "high" && "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400",
-                                                        application.Priority === "medium" && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400",
-                                                        application.Priority === "low" && "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
-                                                    )}
-                                                >
-                                                    {application.Priority === "high" && "Yüksek"}
-                                                    {application.Priority === "medium" && "Orta"}
-                                                    {application.Priority === "low" && "Düşük"}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col items-center gap-1.5">
-                                                    <span className="text-sm text-muted-foreground">
-                                                        {formatDateTime(application.Created_at)}
-                                                    </span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Eye className="h-4 w-4 text-blue-600 dark:text-blue-400 justify-self-center" />
-                                                        </TooltipTrigger>
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                    <div className="py-1.5 px-6 bg-white/80 dark:bg-gray-900/80 border-t border-gray-100 dark:border-gray-800">
-                        <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                                <p className="text-sm text-muted-foreground">
-                                    Toplam {totalApplications} kayıt
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handlePreviousPage}
-                                    disabled={currentPage === 1}
-                                    className="h-8 px-4"
-                                >
-                                    Önceki
-                                </Button>
-                                <div className="flex items-center gap-2 min-w-[5rem] justify-center">
-                                    <span className="font-medium">{currentPage}</span>
-                                    <span className="text-muted-foreground">/</span>
-                                    <span className="text-muted-foreground">{totalPages}</span>
-                                </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleNextPage}
-                                    disabled={currentPage === totalPages}
-                                    className="h-8 px-4"
-                                >
-                                    Sonraki
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            {/* Applications Table */}
+            <Card className="flex-1 overflow-hidden bg-gradient-to-br from-white to-blue-50/50 dark:from-gray-900 dark:to-blue-900/10 border-2 border-blue-100/50 dark:border-blue-900/20 shadow-xl shadow-blue-500/5">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Başvuru</TableHead>
+                            <TableHead>Şube</TableHead>
+                            <TableHead>Başvuran</TableHead>
+                            <TableHead>Durum</TableHead>
+                            <TableHead>Öncelik</TableHead>
+                            <TableHead>Tarih</TableHead>
+                            <TableHead className="text-right">İşlemler</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {paginatedApplications.map((application) => (
+                            <TableRow key={application.id}>
+                                <TableCell>
+                                    <div className="flex flex-col">
+                                        <span className="font-medium">{application.Title}</span>
+                                        <span className="text-sm text-muted-foreground">{application.Description}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>{application.BranchName}</TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col">
+                                        <span>{application.ApplicantName}</span>
+                                        <span className="text-sm text-muted-foreground">{application.ApplicantContact}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge className={cn("font-medium", getStatusColor(application.Status))}>
+                                        {statusMap[application.Status as keyof typeof statusMap]}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge className={cn("font-medium", getPriorityColor(application.Priority))}>
+                                        {application.Priority === "high" ? "Yüksek" : application.Priority === "medium" ? "Orta" : "Düşük"}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col">
+                                        <span>{formatDateTime(application.Created_at)}</span>
+                                        <span className="text-sm text-muted-foreground">
+                                            {application.CreatedUserName} tarafından
+                                        </span>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </Card>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex justify-end gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1}
+                    >
+                        Önceki
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                    >
+                        Sonraki
+                    </Button>
+                </div>
+            )}
         </div>
     )
 }

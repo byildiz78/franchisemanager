@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useFilterStore } from "@/stores/filters-store"
 import { useTabStore } from '@/stores/tab-store'
 import { useTrainingStore } from "@/stores/training-store"
@@ -17,13 +17,14 @@ import { Training, TrainingStatus, departmentOptions, statusOptions, typeOptions
 import CreateTraining from "./components/CreateTraining"
 import { LucideIcon } from "lucide-react"
 import * as LucideIcons from "lucide-react"
+import { mockTrainings } from "./mock-data"
 
 export default function TrainingPage() {
     const { selectedFilter } = useFilterStore()
     const { activeTab } = useTabStore()
-    const { trainings: storeTrainings, userDepartment } = useTrainingStore()
+    const { trainings: storeTrainings, userDepartment, setTrainings } = useTrainingStore()
     const [showCreateForm, setShowCreateForm] = useState(false)
-    const [trainings, setTrainings] = useState<Training[]>([])
+    const [trainings, setLocalTrainings] = useState<Training[]>([])
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState("all")
     const [departmentFilter, setDepartmentFilter] = useState(userDepartment)
@@ -32,6 +33,18 @@ export default function TrainingPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 10
+
+    // Mock verileri yükle
+    useEffect(() => {
+        console.log('Mock veriler yükleniyor:', mockTrainings)
+        setTrainings(mockTrainings)
+        setLocalTrainings(mockTrainings)
+    }, [setTrainings])
+
+    // Store'daki veriler değiştiğinde local state'i güncelle
+    useEffect(() => {
+        setLocalTrainings(storeTrainings)
+    }, [storeTrainings])
 
     const filteredTrainings = trainings.filter(training => {
         const matchesSearch =

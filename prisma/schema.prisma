@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model FranchiseApplication {
+  id            String       @id @default(uuid())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  status        String      // PENDING, APPROVED, REJECTED
+  companyName   String
+  taxNumber     String      @unique
+  address       String
+  city          String
+  district      String
+  contactInfo   ContactInfo?
+  documents     Document[]
+  notes         Note[]
+}
+
+model ContactInfo {
+  id             String    @id @default(uuid())
+  name           String
+  phone          String
+  email          String
+  position       String
+  application    FranchiseApplication @relation(fields: [applicationId], references: [id])
+  applicationId  String    @unique
+}
+
+model Document {
+  id             String    @id @default(uuid())
+  createdAt      DateTime  @default(now())
+  type           String    // TRADE_REGISTRY, TAX_CERTIFICATE, etc.
+  fileName       String
+  fileUrl        String
+  application    FranchiseApplication @relation(fields: [applicationId], references: [id])
+  applicationId  String
+}
+
+model Note {
+  id             String    @id @default(uuid())
+  createdAt      DateTime  @default(now())
+  content        String
+  author         String
+  application    FranchiseApplication @relation(fields: [applicationId], references: [id])
+  applicationId  String
+}

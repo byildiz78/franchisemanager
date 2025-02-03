@@ -52,10 +52,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 url: `/${tenantId}/rental`
             },
             {
-                title: "Royalty Yönetimi",
+                title: "Royalty Yönetimi...",
                 icon: LucideIcons.Receipt,
                 isActive: pathname === `/${tenantId}/royalty`,
                 url: `/${tenantId}/royalty`
+            },
+            {
+                title: "Tedarikçi Sözleşme Yönetimi",
+                icon: LucideIcons.Truck,
+                isActive: pathname === `/${tenantId}/supplier-contract`,
+                url: `/${tenantId}/supplier-contract`
             }
         ];
         return items;
