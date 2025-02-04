@@ -9,14 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-// Yeme-içme mekanı türleri
+// Yeme-içme mekanı türleri - Sadece en önemli türleri tutalım
 const FOOD_PLACE_TYPES = [
-  'restaurant',
-  'cafe',
-  'bar',
-  'bakery',
-  'meal_takeaway',
-  'meal_delivery'
+  'restaurant', // Restoran ve kafeler
+  'meal_takeaway' // Paket servis yapan yerler
 ];
 
 interface Place {
@@ -55,12 +51,8 @@ export default function NearbyPlacesCard({ location }: NearbyPlacesCardProps) {
   const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | null>(null)
   const [showDetails, setShowDetails] = useState(false)
 
-  const getPlaceDetails = async (placeId: string): Promise<PlaceDetails | null> => {
+  const getPlaceDetails = async (service: google.maps.places.PlacesService, placeId: string): Promise<PlaceDetails | null> => {
     if (!window.google) return null
-
-    const service = new google.maps.places.PlacesService(
-      new google.maps.Map(document.createElement('div'))
-    )
 
     return new Promise((resolve, reject) => {
       service.getDetails(
@@ -108,114 +100,132 @@ export default function NearbyPlacesCard({ location }: NearbyPlacesCardProps) {
     })
   }
 
-  const calculateDistance = (placeLocation: google.maps.LatLng) => {
+  const calculateDistance = (origin: { lat: number, lng: number }, destination: { lat: number, lng: number }) => {
     try {
       if (!window.google?.maps?.geometry?.spherical) {
         console.warn('Google Maps Geometry kütüphanesi yüklenemedi');
         return undefined;
       }
 
-      const origin = new google.maps.LatLng(location.lat, location.lng);
-      return google.maps.geometry.spherical.computeDistanceBetween(origin, placeLocation);
+      const originLatLng = new google.maps.LatLng(origin.lat, origin.lng);
+      const destinationLatLng = new google.maps.LatLng(destination.lat, destination.lng);
+      return google.maps.geometry.spherical.computeDistanceBetween(originLatLng, destinationLatLng);
     } catch (error) {
       console.error('Mesafe hesaplanırken hata oluştu:', error);
       return undefined;
     }
   }
 
-  useEffect(() => {
-    const fetchNearbyPlaces = async () => {
-      if (!window.google) return
-      
-      setLoading(true)
-      setError(null)
+  const fetchNearbyPlaces = async () => {
+    if (!window.google) {
+      console.error('Google Maps API yüklenemedi')
+      setError("Google Maps API yüklenemedi")
+      setLoading(false)
+      return
+    }
+    
+    setLoading(true)
+    setError(null)
+    console.log('Yakındaki mekanlar aranıyor...', { lat: location.lat, lng: location.lng })
 
-      try {
-        const service = new google.maps.places.PlacesService(
-          new google.maps.Map(document.createElement('div'))
-        )
+    try {
+      const map = new google.maps.Map(document.createElement('div'))
+      const service = new google.maps.places.PlacesService(map)
 
-        const searchPromise = (request: google.maps.places.PlaceSearchRequest) => {
-          return new Promise<google.maps.places.PlaceResult[]>((resolve, reject) => {
-            service.nearbySearch(request, (results, status) => {
-              if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                resolve(results)
-              } else {
-                reject(status)
-              }
-            })
-          })
+      console.log('Places Service oluşturuldu')
+
+      // Tek bir API çağrısı yap
+      const results = await new Promise<google.maps.places.PlaceResult[]>((resolve, reject) => {
+        const request = {
+          location: new google.maps.LatLng(location.lat, location.lng),
+          radius: 2000,
+          type: 'restaurant' as google.maps.places.PlaceType
         }
 
-        // Tüm yeme-içme mekanı türleri için arama yap
-        const allResults = await Promise.all(
-          FOOD_PLACE_TYPES.map(type =>
-            searchPromise({
-              location: new google.maps.LatLng(location.lat, location.lng),
-              radius: 1000, // 1km yarıçap
-              type: type as google.maps.places.PlaceType
-            }).catch(() => []) // Hata durumunda boş array dön
-          )
-        )
+        console.log('NearbySearch çağrısı yapılıyor...', request)
+        
+        service.nearbySearch(request, (results, status) => {
+          console.log('NearbySearch sonucu:', { status, resultCount: results?.length })
+          
+          if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+            resolve(results)
+          } else {
+            reject(new Error(`Places API Error: ${status}`))
+          }
+        })
+      })
 
-        // Sonuçları düzleştir ve tekrar edenleri kaldır
-        const uniqueResults = Array.from(new Set(
-          allResults.flat().map(place => place.place_id)
-        )).map(placeId =>
-          allResults.flat().find(place => place.place_id === placeId)
-        ).filter(Boolean)
-
-        // Her yer için detaylı bilgi al
-        const detailedPlaces = await Promise.all(
-          uniqueResults.slice(0, 15).map(async place => {
-            try {
-              if (!place?.geometry?.location) {
-                console.warn('Mekan konumu bulunamadı:', place);
-                return null;
-              }
-
-              const placeLocation = place.geometry.location;
-              const distance = calculateDistance(placeLocation);
-              
-              const details = await getPlaceDetails(place.place_id!)
-              return details ? {
-                ...details,
-                distance,
-                location: placeLocation
-              } : null;
-            } catch (error) {
-              console.error('Error fetching place details:', error)
-              return null
-            }
-          })
-        )
-
-        // Mesafeye göre sırala (mesafesi olmayanlar sona gelsin)
-        const sortedPlaces = detailedPlaces
-          .filter(Boolean)
-          .sort((a, b) => {
-            if (a!.distance === undefined) return 1;
-            if (b!.distance === undefined) return -1;
-            return a!.distance - b!.distance;
-          }) as Place[];
-
-        setPlaces(sortedPlaces)
-      } catch (err) {
-        setError("Yakındaki mekanlar yüklenirken bir hata oluştu")
-        console.error("Error fetching nearby places:", err)
-      } finally {
+      if (!results.length) {
+        console.log('Yakında mekan bulunamadı')
+        setError("Bu konumda mekan bulunamadı")
         setLoading(false)
+        return
       }
-    }
 
-    if (location.lat && location.lng) {
+      console.log(`${results.length} mekan bulundu, ilk 20 tanesi işleniyor...`)
+
+      // En yakın 20 sonucu al
+      const nearestResults = results.slice(0, 20)
+
+      // Detaylı bilgileri getir
+      const detailedPlaces = await Promise.all(
+        nearestResults.map(async (place, index) => {
+          try {
+            console.log(`${index + 1}. mekan detayları alınıyor: ${place.name}`)
+            
+            const details = await getPlaceDetails(service, place.place_id!)
+            const distance = await calculateDistance(
+              { lat: location.lat, lng: location.lng },
+              { lat: place.geometry?.location?.lat() || 0, lng: place.geometry?.location?.lng() || 0 }
+            )
+
+            return {
+              placeId: place.place_id!,
+              name: place.name!,
+              type: place.types?.[0] || 'unknown',
+              vicinity: place.vicinity!,
+              rating: place.rating,
+              userRatingsTotal: place.user_ratings_total,
+              openNow: place.opening_hours?.isOpen(),
+              priceLevel: place.price_level,
+              phoneNumber: details?.phoneNumber,
+              website: details?.website,
+              photos: place.photos?.slice(0, 1),
+              reviews: place.reviews?.slice(0, 3),
+              openingHours: details?.openingHours,
+              distance,
+              location: place.geometry?.location
+            }
+          } catch (error) {
+            console.error(`Mekan detayları alınırken hata: ${place.name}`, error)
+            return null
+          }
+        })
+      )
+
+      // Null sonuçları filtrele
+      const validPlaces = detailedPlaces.filter((place): place is Place => place !== null)
+      console.log(`${validPlaces.length} geçerli mekan işlendi`)
+
+      setPlaces(validPlaces)
+      setLoading(false)
+    } catch (err) {
+      console.error("Yakındaki mekanlar aranırken hata:", err)
+      setError(err instanceof Error ? err.message : "Yakındaki mekanlar yüklenirken bir hata oluştu.")
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (location?.lat && location?.lng) {
+      console.log('Konum değişti, mekanlar yeniden yükleniyor...', location)
       fetchNearbyPlaces()
     }
-  }, [location])
+  }, [location?.lat, location?.lng])
 
   const handlePlaceClick = async (place: Place) => {
     try {
-      const details = await getPlaceDetails(place.placeId)
+      const details = await getPlaceDetails(new google.maps.places.PlacesService(new google.maps.Map(document.createElement('div'))), place.placeId)
       if (details) {
         setSelectedPlace(details)
         setShowDetails(true)
