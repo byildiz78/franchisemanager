@@ -1,11 +1,14 @@
 import { useLoadScript, GoogleMap, MarkerF } from '@react-google-maps/api';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import DemographicCard from './DemographicCard';
 import NearbyPlacesCard from './NearbyPlacesCard';
+import FoursquareCard from './FoursquareCard';
 
 const libraries: ("places" | "geometry")[] = ["places", "geometry"];
 
@@ -127,16 +130,20 @@ export default function GoogleMapWrapper({ center, onLocationSelect, address }: 
           </div>
         </div>
 
-        {/* Sağ Kolon - Demografik Veriler ve Yakındaki Yerler */}
+        {/* Sağ Kolon - Demografik Veriler, Yakındaki Yerler ve Foursquare */}
         <div className="space-y-4">
           <DemographicCard 
             location={marker}
             address={formattedAddress}
           />
 
-          <NearbyPlacesCard 
-            location={marker}
-          />
+          <div className="grid grid-cols-1 gap-4">
+            <ScrollArea className="h-[500px]">
+              <NearbyPlacesCard 
+                location={marker}
+              />
+            </ScrollArea>
+          </div>
         </div>
       </div>
     </div>

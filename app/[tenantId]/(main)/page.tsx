@@ -5,11 +5,11 @@ import Header from "@/components/header";
 import { useTabStore } from "@/stores/tab-store";
 import dynamic from 'next/dynamic';
 import { memo } from 'react';
-import { Home as HomeIcon } from 'lucide-react';
+import { Bird as BirdIcon } from 'lucide-react';
 import MobilePage from "@/app/[tenantId]/(main)/mobile/page";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const DashboardPage = memo(dynamic(() => import('@/app/[tenantId]/(main)/dashboard/page'), {
+const BirdseyePage = memo(dynamic(() => import('@/app/[tenantId]/(main)/birdseye/page'), {
     loading: () => <div>Loading...</div>,
     ssr: false
 }));
@@ -25,7 +25,7 @@ export default function MainPage() {
             } else if (tabs.length > 1) {
                 setActiveTab(tabs[1].id);
             } else {
-                setActiveTab("dashboard");
+                setActiveTab("birdseye");
             }
         }
         removeTab(tabId);
@@ -48,8 +48,8 @@ export default function MainPage() {
                                 className="h-full flex flex-col"
                             >
                                 <TabsList className="w-full justify-start" onCloseAll={removeAllTabs}>
-                                    <TabsTrigger value="dashboard" icon={<HomeIcon className="w-4 h-4" />}>
-                                        Dashboard
+                                    <TabsTrigger value="birdseye" icon={<BirdIcon className="w-4 h-4" />}>
+                                        Kuşbakışı
                                     </TabsTrigger>
                                     {tabs.map((tab) => (
                                         <TabsTrigger
@@ -65,12 +65,13 @@ export default function MainPage() {
                                 <div className="flex-1 mt-4 overflow-hidden">
                                     <div 
                                         style={{ 
-                                            visibility: activeTab === "dashboard" ? "visible" : "hidden",
+                                            visibility: activeTab === "birdseye" ? "visible" : "hidden",
                                             height: "100%",
-                                            position: activeTab === "dashboard" ? "relative" : "absolute"
+                                            position: activeTab === "birdseye" ? "relative" : "absolute",
+                                            inset: 0
                                         }}
                                     >
-                                        <DashboardPage />
+                                        <BirdseyePage />
                                     </div>
                                     {tabs.map((tab) => {
                                         if (!renderedComponents[tab.id]) {
@@ -87,7 +88,7 @@ export default function MainPage() {
                                                     visibility: activeTab === tab.id ? "visible" : "hidden",
                                                     height: "100%",
                                                     position: activeTab === tab.id ? "relative" : "absolute",
-                                                    width: "100%"
+                                                    inset: 0
                                                 }}
                                             >
                                                 {renderedComponents[tab.id]}

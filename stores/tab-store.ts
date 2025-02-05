@@ -26,7 +26,7 @@ interface TabStore {
 
 export const useTabStore = create<TabStore>((set, get) => ({
   tabs: [],
-  activeTab: 'dashboard',
+  activeTab: 'birdseye',
   renderedComponents: {},
   addTab: (tab) => {
     set((state) => ({
@@ -45,7 +45,7 @@ export const useTabStore = create<TabStore>((set, get) => ({
   removeAllTabs: () =>
     set((state) => ({
       tabs: [],
-      activeTab: 'dashboard',
+      activeTab: 'birdseye',
       renderedComponents: {},
     })),
   setActiveTab: (id) => set({ activeTab: id }),

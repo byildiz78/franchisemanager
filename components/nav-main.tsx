@@ -47,36 +47,36 @@ export function NavMain({ items }: NavMainProps) {
     },
 
 
-    {
-      title: "Data Analiz",
-      icon: BarChart3,
-      isActive: pathname === `/${tenantId}/data-analysis`,
-      url: `/${tenantId}/data-analysis`,
-    },
+
     {
       title: "Bayi Başvuru Yönetimi",
       icon: Store,
       isActive: pathname === `/${tenantId}/branchapplication`,
       url: `/${tenantId}/branchapplication`,
     },
-    {
-      title: "Bayi Onboarding",
-      icon: Store,
-      isActive: pathname === `/${tenantId}/onboarding`,
-      url: `/${tenantId}/onboarding`,
-    },
+
     {
       title: "Bayi Sözleşme Yönetimi",
       icon: FileText,
       isActive: pathname === `/${tenantId}/contract`,
       url: `/${tenantId}/contract`,
     },
+
     {
       title: "Kiralama Yönetimi",
       icon: Building2,
       isActive: pathname === `/${tenantId}/rental`,
       url: `/${tenantId}/rental`,
     },
+
+    {
+      title: "Bayi Onboarding",
+      icon: Store,
+      isActive: pathname === `/${tenantId}/onboarding`,
+      url: `/${tenantId}/onboarding`,
+    },
+
+
     {
       title: "Royalty Yönetimi",
       icon: Receipt,
