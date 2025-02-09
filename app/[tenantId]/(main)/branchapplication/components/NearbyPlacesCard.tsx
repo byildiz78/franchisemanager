@@ -24,16 +24,16 @@ interface Place {
   userRatingsTotal?: number
   openNow?: boolean
   priceLevel?: number
-  phoneNumber?: string
-  website?: string
-  photos?: google.maps.places.PlacePhoto[]
-  reviews?: google.maps.places.PlaceReview[]
-  openingHours?: string[]
   distance?: number
   location?: google.maps.LatLng
 }
 
 interface PlaceDetails extends Place {
+  phoneNumber?: string
+  website?: string
+  photos?: google.maps.places.PlacePhoto[]
+  reviews?: google.maps.places.PlaceReview[]
+  openingHours?: string[]
   url?: string
 }
 
@@ -50,6 +50,7 @@ export default function NearbyPlacesCard({ location }: NearbyPlacesCardProps) {
   const [error, setError] = useState<string | null>(null)
   const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | null>(null)
   const [showDetails, setShowDetails] = useState(false)
+  const [lastLocation, setLastLocation] = useState<{ lat: number; lng: number } | null>(null)
 
   const getPlaceDetails = async (service: google.maps.places.PlacesService, placeId: string): Promise<PlaceDetails | null> => {
     if (!window.google) return null
@@ -86,8 +87,8 @@ export default function NearbyPlacesCard({ location }: NearbyPlacesCardProps) {
               priceLevel: result.price_level,
               phoneNumber: result.formatted_phone_number,
               website: result.website,
-              photos: result.photos,
-              reviews: result.reviews,
+              photos: result.photos?.slice(0, 5), // Sadece ilk 5 fotoğrafı al
+              reviews: result.reviews?.slice(0, 3), // Sadece ilk 3 yorumu al
               openingHours: result.opening_hours?.weekday_text,
               url: result.url
             }
@@ -132,8 +133,6 @@ export default function NearbyPlacesCard({ location }: NearbyPlacesCardProps) {
       const map = new google.maps.Map(document.createElement('div'))
       const service = new google.maps.places.PlacesService(map)
 
-      console.log('Places Service oluşturuldu')
-
       // Tek bir API çağrısı yap
       const results = await new Promise<google.maps.places.PlaceResult[]>((resolve, reject) => {
         const request = {
@@ -141,12 +140,8 @@ export default function NearbyPlacesCard({ location }: NearbyPlacesCardProps) {
           radius: 2000,
           type: 'restaurant' as google.maps.places.PlaceType
         }
-
-        console.log('NearbySearch çağrısı yapılıyor...', request)
         
         service.nearbySearch(request, (results, status) => {
-          console.log('NearbySearch sonucu:', { status, resultCount: results?.length })
-          
           if (status === google.maps.places.PlacesServiceStatus.OK && results) {
             resolve(results)
           } else {
@@ -156,58 +151,34 @@ export default function NearbyPlacesCard({ location }: NearbyPlacesCardProps) {
       })
 
       if (!results.length) {
-        console.log('Yakında mekan bulunamadı')
         setError("Bu konumda mekan bulunamadı")
         setLoading(false)
         return
       }
 
-      console.log(`${results.length} mekan bulundu, ilk 20 tanesi işleniyor...`)
+      // En yakın 20 sonucu al ve temel bilgileri kullan
+      const nearestResults = results.slice(0, 20).map(place => {
+        const distance = calculateDistance(
+          { lat: location.lat, lng: location.lng },
+          { lat: place.geometry?.location?.lat() || 0, lng: place.geometry?.location?.lng() || 0 }
+        )
 
-      // En yakın 20 sonucu al
-      const nearestResults = results.slice(0, 20)
+        return {
+          placeId: place.place_id!,
+          name: place.name!,
+          type: place.types?.[0] || 'unknown',
+          vicinity: place.vicinity!,
+          rating: place.rating,
+          userRatingsTotal: place.user_ratings_total,
+          openNow: place.opening_hours?.isOpen(),
+          priceLevel: place.price_level,
+          distance,
+          location: place.geometry?.location
+        }
+      })
 
-      // Detaylı bilgileri getir
-      const detailedPlaces = await Promise.all(
-        nearestResults.map(async (place, index) => {
-          try {
-            console.log(`${index + 1}. mekan detayları alınıyor: ${place.name}`)
-            
-            const details = await getPlaceDetails(service, place.place_id!)
-            const distance = await calculateDistance(
-              { lat: location.lat, lng: location.lng },
-              { lat: place.geometry?.location?.lat() || 0, lng: place.geometry?.location?.lng() || 0 }
-            )
-
-            return {
-              placeId: place.place_id!,
-              name: place.name!,
-              type: place.types?.[0] || 'unknown',
-              vicinity: place.vicinity!,
-              rating: place.rating,
-              userRatingsTotal: place.user_ratings_total,
-              openNow: place.opening_hours?.isOpen(),
-              priceLevel: place.price_level,
-              phoneNumber: details?.phoneNumber,
-              website: details?.website,
-              photos: place.photos?.slice(0, 1),
-              reviews: place.reviews?.slice(0, 3),
-              openingHours: details?.openingHours,
-              distance,
-              location: place.geometry?.location
-            }
-          } catch (error) {
-            console.error(`Mekan detayları alınırken hata: ${place.name}`, error)
-            return null
-          }
-        })
-      )
-
-      // Null sonuçları filtrele
-      const validPlaces = detailedPlaces.filter((place): place is Place => place !== null)
-      console.log(`${validPlaces.length} geçerli mekan işlendi`)
-
-      setPlaces(validPlaces)
+      setPlaces(nearestResults)
+      setLastLocation(location)
       setLoading(false)
     } catch (err) {
       console.error("Yakındaki mekanlar aranırken hata:", err)
@@ -218,21 +189,31 @@ export default function NearbyPlacesCard({ location }: NearbyPlacesCardProps) {
 
   useEffect(() => {
     if (location?.lat && location?.lng) {
-      console.log('Konum değişti, mekanlar yeniden yükleniyor...', location)
-      fetchNearbyPlaces()
+      // Konum değişikliği kontrolü
+      if (!lastLocation || 
+          calculateDistance(lastLocation, location) > 1000) { // 1km'den fazla değişim varsa
+        console.log('Konum önemli ölçüde değişti, mekanlar yeniden yükleniyor...')
+        fetchNearbyPlaces()
+      }
     }
   }, [location?.lat, location?.lng])
 
   const handlePlaceClick = async (place: Place) => {
+    setLoading(true)
     try {
-      const details = await getPlaceDetails(new google.maps.places.PlacesService(new google.maps.Map(document.createElement('div'))), place.placeId)
+      const service = new google.maps.places.PlacesService(new google.maps.Map(document.createElement('div')))
+      const details = await getPlaceDetails(service, place.placeId)
       if (details) {
-        setSelectedPlace(details)
+        setSelectedPlace({
+          ...place,
+          ...details
+        })
         setShowDetails(true)
       }
     } catch (error) {
       console.error('Error fetching place details:', error)
     }
+    setLoading(false)
   }
 
   const formatDistance = (meters?: number) => {
@@ -372,7 +353,7 @@ export default function NearbyPlacesCard({ location }: NearbyPlacesCardProps) {
                 {/* Fotoğraflar */}
                 {selectedPlace.photos && selectedPlace.photos.length > 0 && (
                   <div className="flex gap-2 overflow-x-auto pb-2">
-                    {selectedPlace.photos.slice(0, 5).map((photo, index) => (
+                    {selectedPlace.photos.map((photo, index) => (
                       <img
                         key={index}
                         src={photo.getUrl()}
@@ -426,7 +407,7 @@ export default function NearbyPlacesCard({ location }: NearbyPlacesCardProps) {
                   <div className="space-y-2">
                     <h4 className="font-medium">Son Değerlendirmeler</h4>
                     <div className="space-y-3">
-                      {selectedPlace.reviews.slice(0, 3).map((review, index) => (
+                      {selectedPlace.reviews.map((review, index) => (
                         <div key={index} className="space-y-1">
                           <div className="flex items-center gap-2">
                             <img
