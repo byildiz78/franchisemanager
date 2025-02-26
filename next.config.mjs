@@ -4,8 +4,8 @@ const nextConfig = {
     assetPrefix: process.env.NEXT_PUBLIC_BASEPATH,
     reactStrictMode: false,
     i18n: {
-      locales: ['en', 'tr'],
-      defaultLocale: 'tr',
+        locales: ['en', 'tr'],
+        defaultLocale: 'tr',
     },
     output: 'standalone',
     eslint: {
@@ -26,17 +26,44 @@ const nextConfig = {
     },
     async headers() {
         return [
-         {
-            source: '/:path*',
-            headers: [
-             {
-                key: 'Content-Security-Policy',
-                value: "frame-src 'self' http: https:;"
-             }
-            ],
-         },
+            {
+                source: '/:path*',
+                headers: [
+                    {
+                        key: 'Content-Security-Policy',
+                        value: "frame-src 'self' http: https:;"
+                    }
+                ],
+            },
         ]
     },
+    webpack: (config) => {
+        config.module.rules.push({
+            test: /\.(png|jpg|gif)$/i,
+            use: [
+                {
+                    loader: 'url-loader',
+                    options: {
+                        limit: 8192,
+                    },
+                },
+            ],
+        })
+        return config
+    },
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'fastly.4sqi.net',
+            },
+            {
+                protocol: 'https',
+                hostname: 'maps.googleapis.com',
+                pathname: '/maps/api/place/photo/**',
+            }
+        ],
+    }
 };
- 
+
 export default nextConfig; 
