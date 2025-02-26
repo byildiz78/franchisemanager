@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify, SignJWT, decodeJwt } from 'jose';
-import { checkTenantDatabase } from '@/lib/utils';
+import { checkTenantDatabase } from './lib/utils';
 
 const textEncoder = new TextEncoder();
 const ACCESS_TOKEN_SECRET = textEncoder.encode(process.env.ACCESS_TOKEN_SECRET);
@@ -61,10 +61,11 @@ async function createNewAccessToken(username: string | unknown, userId: string |
 
 export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname.replace(process.env.NEXT_PUBLIC_BASEPATH ||'', '');
-    const tenantId = (process.env.IS_BOLT ? process.env.BOLTTENANT : getTenantId(request)) ?? "";
+    const tenantId = getTenantId(request);
     const isApiRoute = pathname.includes("/api/");
     const isLoginRoute = pathname.includes("login");
     const isNotFoundRoute = pathname.includes("notfound");
+
     if (isNotFoundRoute) {
         if (tenantId && !isApiRoute) {
             const database = await checkTenantDatabase(tenantId);
@@ -86,8 +87,8 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    const accessToken = process.env.IS_BOLT ? new TextEncoder().encode(process.env.BOLTACCESSTOKEN) : request.cookies.get(`${tenantId}_access_token`)?.value;
-    const refreshToken = process.env.IS_BOLT ? new TextEncoder().encode(process.env.BOLTREFRESHTOKEN) : request.cookies.get(`${tenantId}_refresh_token`)?.value;
+    const accessToken = request.cookies.get(`${tenantId}_access_token`)?.value;
+    const refreshToken = request.cookies.get(`${tenantId}_refresh_token`)?.value;
     
     if (!accessToken || !refreshToken) {
         
@@ -99,6 +100,7 @@ export async function middleware(request: NextRequest) {
         response.cookies.set(`${tenantId}_refresh_token`, '', { maxAge: 0 });
         return response;
     }
+
     const baseTokenOptions = {
         audience: tenantId,
         issuer: TOKEN_ISSUER,
