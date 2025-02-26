@@ -8,7 +8,7 @@ const MobilePage = () => {
         if (window.ReactNativeWebView) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'loginSuccess',
-                userId: "1297"
+                userId: "1"
             }));
         }
     }, []);

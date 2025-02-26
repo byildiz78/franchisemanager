@@ -50,7 +50,7 @@ async function createNewAccessToken(username: string | unknown, userId: string |
         const date = Date.now();
         return await new SignJWT(tokenPayload)
             .setProtectedHeader({ alg: ACCESS_TOKEN_ALGORITHM })
-            .setExpirationTime(Math.floor(date / 1000) + ACCESS_TOKEN_LIFETIME)
+            // .setExpirationTime(Math.floor(date / 1000) + ACCESS_TOKEN_LIFETIME)
             .setIssuer(TOKEN_ISSUER)
             .setAudience(tenantId)
             .setIssuedAt(Math.floor(date / 1000))
@@ -61,13 +61,14 @@ async function createNewAccessToken(username: string | unknown, userId: string |
 
 export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname.replace(process.env.NEXT_PUBLIC_BASEPATH ||'', '');
-    const tenantId = (process.env.IS_BOLT ? process.env.BOLTTENANT : getTenantId(request)) ?? "";
+    const tenantId = (process.env.IS_BOLT?.toString() == "1" ? process.env.BOLTTENANT : getTenantId(request)) ?? "";
     const isApiRoute = pathname.includes("/api/");
     const isLoginRoute = pathname.includes("login");
     const isNotFoundRoute = pathname.includes("notfound");
     if (isNotFoundRoute) {
         if (tenantId && !isApiRoute) {
             const database = await checkTenantDatabase(tenantId);
+       
             if (database !== undefined) {
                 return NextResponse.redirect(new URL(`${process.env.NEXT_PUBLIC_BASEPATH}/${tenantId}/login`, request.url));
             }
@@ -86,9 +87,8 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    const accessToken = process.env.IS_BOLT ? new TextEncoder().encode(process.env.BOLTACCESSTOKEN) : request.cookies.get(`${tenantId}_access_token`)?.value;
-    const refreshToken = process.env.IS_BOLT ? new TextEncoder().encode(process.env.BOLTREFRESHTOKEN) : request.cookies.get(`${tenantId}_refresh_token`)?.value;
-    
+    const accessToken = process.env.IS_BOLT?.toString() == "1" ? process.env.BOLTACCESSTOKEN ?? "".toString() : request.cookies.get(`${tenantId}_access_token`)?.value;
+    const refreshToken = process.env.IS_BOLT?.toString() == "1" ? process.env.BOLTREFRESHTOKEN ?? "".toString() : request.cookies.get(`${tenantId}_refresh_token`)?.value;
     if (!accessToken || !refreshToken) {
         
         if (isLoginRoute || isApiRoute) {
@@ -107,6 +107,7 @@ export async function middleware(request: NextRequest) {
         ...baseTokenOptions,
         algorithms: [REFRESH_TOKEN_ALGORITHM]
     });
+   
 
     if (!isValidRefresh) {
         const response = NextResponse.redirect(new URL(`${process.env.NEXT_PUBLIC_BASEPATH}/${tenantId}/login`, request.url));

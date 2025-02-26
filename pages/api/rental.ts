@@ -21,10 +21,10 @@ export default async function handler(
 
         if (cookies) {
             let userId = "";
-            if(process.env.IS_BOLT){
-                userId = "1297";
+            if(process.env.IS_BOLT?.toString() == "1"){
+                userId = "1";
             }else{
-                const accessToken = (process.env.IS_BOLT ? new TextEncoder().encode(process.env.BOLTACCESSTOKEN) : cookies[`${tenantId}_access_token`]) ?? "";
+                const accessToken = (process.env.IS_BOLT?.toString() == "1" ? new TextEncoder().encode(process.env.BOLTACCESSTOKEN) : cookies[`${tenantId}_access_token`]) ?? "";
                 const decoded = await jwtVerify(
                     accessToken,
                     ACCESS_TOKEN_SECRET

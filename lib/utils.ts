@@ -35,7 +35,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 dakika
 
 
 export async function checkTenantDatabase(tenantId: string): Promise<DatabaseResponse | undefined> {
-    if(process.env.IS_BOLT) {
+    if(process.env.IS_BOLT?.toString() == "1") {
         try {
             const instance = Dataset.getInstance();
             const databases = await instance.getDatabase<DatabaseResponse[]>();
